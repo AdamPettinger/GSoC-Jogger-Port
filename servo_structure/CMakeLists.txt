@@ -34,9 +34,18 @@ ament_target_dependencies(collision_check_component
   "std_msgs")
 rclcpp_components_register_nodes(collision_check_component "moveit_servo::CollisionCheck")
 
+add_library(jog_calcs_component SHARED
+   src/jog_calcs.cpp)
+ament_target_dependencies(jog_calcs_component
+  "rclcpp"
+  "rclcpp_components"
+  "std_msgs")
+rclcpp_components_register_nodes(jog_calcs_component "moveit_servo::JogCalcs")
+
 # Install Libraries
 install(TARGETS
   collision_check_component
+  jog_calcs_component
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
