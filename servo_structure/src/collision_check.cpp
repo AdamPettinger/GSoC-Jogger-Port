@@ -5,23 +5,43 @@
 // For timing constants
 using namespace std::chrono_literals;
 
+// For binding the callback
+using std::placeholders::_1;
+
 namespace moveit_servo
 {
 CollisionCheck::CollisionCheck(const rclcpp::NodeOptions & options)
-  : Node("minimal_publisher", options), count_(0)
+  : Node("minimal_publisher", options), count_(0.0), latest_joint_state_(0.0)
 {
-    publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
-    timer_ = this->create_wall_timer(
-        500ms, std::bind(&CollisionCheck::timer_callback, this));
+  publisher_ = this->create_publisher<std_msgs::msg::Float64>("collision_velocity_scale", 10);
+  timer_ = this->create_wall_timer(
+      500ms, std::bind(&CollisionCheck::timer_callback, this));
+
+  subscription_ = this->create_subscription<std_msgs::msg::Float64>(
+    "joint_state", 10, std::bind(&CollisionCheck::jointStateCB, this, _1));
 }
 
 void CollisionCheck::timer_callback()
 {
-    auto message = std_msgs::msg::String();
-    message.data = "Hello, world! " + std::to_string(count_++);
-    RCLCPP_INFO(this->get_logger(), "Publishing: '%s' at address %p", message.data.c_str(),
-        &message);
-    publisher_->publish(message);
+  // Copy the latest joint state
+  {
+    const std::lock_guard<std::mutex> lock(CollisionCheck);
+    count_ = latest_joint_state_;
+  }
+
+  auto message = std_msgs::msg::Float64();
+  message.data = 2*count_;
+
+  std::cout << "Publishing output with value: " << message.data << " at address: " << &message << std::endl;
+  publisher_->publish(message);
+}
+
+void CollisionCheck::jointStateCB(const std_msgs::msg::Float64::SharedPtr msg)
+{
+  std::cout << "Heard message with jointStateCB, value = " << msg->data << ". Address was " << &msg << std::endl;
+
+  const std::lock_guard<std::mutex> lock(joint_state_mutex_);
+  latest_joint_state_ = msg->data;
 }
 
 }  // namespace moveit_servo

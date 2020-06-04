@@ -1,8 +1,11 @@
 #include <chrono>
 #include <memory>
 
+#include <mutex>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/float64.hpp"
 
 namespace moveit_servo
 {
@@ -14,8 +17,12 @@ public:
 private:
   void timer_callback();
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-  size_t count_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_;
+  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr subscription_;
+  double count_;
+  void jointStateCB(const std_msgs::msg::Float64::SharedPtr msg);
+  mutable std::mutex joint_state_mutex_;
+  double latest_joint_state_;
 };
 
 }  // namespace moveit_servo
