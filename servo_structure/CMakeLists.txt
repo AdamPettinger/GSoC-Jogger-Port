@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 
@@ -39,7 +40,8 @@ add_library(jog_calcs_component SHARED
 ament_target_dependencies(jog_calcs_component
   "rclcpp"
   "rclcpp_components"
-  "std_msgs")
+  "std_msgs"
+  "std_srvs")
 rclcpp_components_register_nodes(jog_calcs_component "moveit_servo::JogCalcs")
 
 # Install Libraries

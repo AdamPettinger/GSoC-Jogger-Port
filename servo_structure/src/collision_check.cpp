@@ -11,7 +11,7 @@ using std::placeholders::_1;
 namespace moveit_servo
 {
 CollisionCheck::CollisionCheck(const rclcpp::NodeOptions & options)
-  : Node("collision_checking", options), latest_joint_state_(0.0)
+  : Node("collision_checking", rclcpp::NodeOptions().use_intra_process_comms(true)), latest_joint_state_(0.0)
 {
   publisher_ = this->create_publisher<std_msgs::msg::Float64>("collision_velocity_scale", 10);
   timer_ = this->create_wall_timer(
@@ -31,16 +31,16 @@ void CollisionCheck::timer_callback()
     count = latest_joint_state_;
   }
 
-  auto message = std_msgs::msg::Float64();
-  message.data = 2*count;
+  auto message = std::make_unique<std_msgs::msg::Float64>();
+  message.get()->data = 2*count;
 
-  std::cout << "[Collision] Publishing output with value: " << message.data << " at address: " << &message << std::endl;
-  publisher_->publish(message);
+  std::cout << "[Collision] Publishing output with value: " << message.get()->data << " at address: " << message.get() << std::endl;
+  publisher_->publish(std::move(message));
 }
 
 void CollisionCheck::jointStateCB(const std_msgs::msg::Float64::SharedPtr msg)
 {
-  std::cout << "[Collision] Heard message with jointStateCB, value = " << msg->data << ". Address was " << &msg << std::endl;
+  std::cout << "[Collision] Heard message with jointStateCB, value = " << msg->data << ". Address was " << msg.get() << std::endl;
 
   const std::lock_guard<std::mutex> lock(joint_state_mutex_);
   latest_joint_state_ = msg->data;
