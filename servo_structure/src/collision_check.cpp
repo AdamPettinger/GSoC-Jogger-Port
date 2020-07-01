@@ -19,6 +19,23 @@ CollisionCheck::CollisionCheck(const rclcpp::NodeOptions & options)
 
   subscription_ = this->create_subscription<std_msgs::msg::Float64>(
     "joint_state", 10, std::bind(&CollisionCheck::jointStateCB, this, _1));
+
+  rclcpp::WaitSet wait_set(
+    std::vector<rclcpp::WaitSet::SubscriptionEntry>{{subscription_}});
+
+  {
+    auto wait_result = wait_set.wait();
+    std::cout << "Wait result was: " << wait_result.kind() << "\n";
+
+    std_msgs::msg::Float64 msg;
+    rclcpp::MessageInfo msg_info;
+    subscription_->take(msg, msg_info);
+
+    auto msg_ptr = std::make_shared<std_msgs::msg::Float64>(msg);
+    jointStateCB(msg_ptr);
+
+    std::cout << "End of waiting block\n";
+  }
 }
 
 void CollisionCheck::timer_callback()
